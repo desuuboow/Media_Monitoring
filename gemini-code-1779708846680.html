@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ROSEA Humanitarian Monitor (Free Tier)</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #f7f7f5;
+    --surface: #ffffff;
+    --surface2: #f0efe9;
+    --border: #e2e0d8;
+    --border2: #cccac0;
+    --text: #1a1a18;
+    --text2: #5a5a54;
+    --text3: #9a9a90;
+    --blue: #185FA5;
+    --blue-bg: #E6F1FB;
+    --blue-text: #0C447C;
+    --red-bg: #FCEBEB;
+    --red-text: #791F1F;
+    --amber-bg: #FAEEDA;
+    --amber-text: #633806;
+    --green-bg: #EAF3DE;
+    --green-text: #27500A;
+    --purple-bg: #EEEDFE;
+    --purple-text: #3C3489;
+    --teal-bg: #E1F5EE;
+    --teal-text: #085041;
+    --pink-bg: #FBEAF0;
+    --pink-text: #72243E;
+  }
+
+  body {
+    font-family: 'Inter', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 0;
+  }
+
+  .topbar {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 14px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+  .topbar-left { display: flex; align-items: center; gap: 12px; }
+  .logo { width: 32px; height: 32px; background: var(--blue); border-radius: 8px; display: flex; align-items: center; justify-content: center; }
+  .logo svg { width: 18px; height: 18px; color: white; }
+  .topbar h1 { font-size: 15px; font-weight: 600; color: var(--text); }
+  .topbar-right { font-size: 12px; color: var(--text3); display: flex; align-items: center; gap: 15px; }
+  
+  .key-status {
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    cursor: pointer;
+    background: var(--surface2);
+    color: var(--text2);
+    border: 1px solid var(--border);
+  }
+  .key-status.set {
+    background: var(--green-bg);
+    color: var(--green-text);
+    border-color: #97C459;
+  }
+
+  .layout { display: flex; gap: 0; min-height: calc(100vh - 61px); }
+
+  .sidebar {
+    width: 280px;
+    min-width: 280px;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    padding: 20px;
+    overflow-y: auto;
+  }
+
+  .main { flex: 1; padding: 24px 28px; overflow-y: auto; }
+
+  .section { margin-bottom: 20px; }
+  .section-label {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--text3);
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .section-label .actions { display: flex; gap: 10px; }
+  .qlink { font-size: 11px; color: var(--blue); cursor: pointer; font-weight: 400; text-transform: none; letter-spacing: 0; }
+  .qlink:hover { text-decoration: underline; }
+
+  .tags { display: flex; flex-wrap: wrap; gap: 5px; }
+  .tag {
+    font-size: 12px;
+    padding: 4px 9px;
+    border-radius: 99px;
+    border: 1px solid var(--border);
+    cursor: pointer;
+    color: var(--text2);
+    background: var(--surface);
+    user-select: none;
+    transition: all .12s;
+    line-height: 1.4;
+  }
+  .tag:hover { border-color: var(--border2); }
+  .tag.on { background: var(--blue-bg); color: var(--blue-text); border-color: #85B7EB; }
+
+  .theme-tag { font-size: 12px; padding: 4px 9px; border-radius: 99px; border: 1px solid var(--border); cursor: pointer; color: var(--text2); background: var(--surface); user-select: none; transition: all .12s; }
+  .theme-tag:hover { border-color: var(--border2); }
+  .theme-tag.conflict.on { background: var(--red-bg); color: var(--red-text); border-color: #F09595; }
+  .theme-tag.displacement.on { background: var(--purple-bg); color: var(--purple-text); border-color: #AFA9EC; }
+  .theme-tag.food.on { background: var(--amber-bg); color: var(--amber-text); border-color: #EF9F27; }
+  .theme-tag.health.on { background: var(--green-bg); color: var(--green-text); border-color: #97C459; }
+  .theme-tag.climate.on { background: var(--teal-bg); color: var(--teal-text); border-color: #5DCAA5; }
+  .theme-tag.political.on { background: var(--pink-bg); color: var(--pink-text); border-color: #ED93B1; }
+
+  .divider { border: none; border-top: 1px solid var(--border); margin: 16px 0; }
+
+  .field label { font-size: 11px; color: var(--text2); display: block; margin-bottom: 5px; font-weight: 500; }
+  select {
+    width: 100%;
+    padding: 7px 10px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 13px;
+    background: var(--surface);
+    color: var(--text);
+    cursor: pointer;
+    margin-bottom: 12px;
+    font-family: inherit;
+  }
+  select:focus { outline: none; border-color: var(--blue); }
+
+  .scan-btn {
+    width: 100%;
+    padding: 10px 16px;
+    background: var(--blue);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-family: inherit;
+    transition: background .12s;
+  }
+  .scan-btn:hover { background: #0C447C; }
+  .scan-btn:disabled { opacity: .45; cursor: not-allowed; }
+
+  .clear-btn {
+    width: 100%;
+    margin-top: 8px;
+    padding: 8px 16px;
+    background: transparent;
+    color: var(--text2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 13px;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .clear-btn:hover { background: var(--surface2); }
+
+  .progress { height: 3px; background: var(--border); border-radius: 2px; overflow: hidden; margin-top: 14px; }
+  .progress-fill { height: 100%; background: var(--blue); border-radius: 2px; width: 0%; transition: width .5s ease; }
+
+  .main-header { margin-bottom: 20px; }
+  .main-header h2 { font-size: 20px; font-weight: 600; color: var(--text); }
+  .main-header p { font-size: 13px; color: var(--text2); margin-top: 4px; }
+
+  .stats-row { display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; }
+  .stat-card {
+    flex: 1;
+    min-width: 100px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 16px;
+  }
+  .stat-card .val { font-size: 22px; font-weight: 600; color: var(--text); }
+  .stat-card .key { font-size: 11px; color: var(--text3); margin-top: 2px; }
+
+  .alert-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px 20px;
+    margin-bottom: 10px;
+    transition: border-color .12s;
+  }
+  .alert-card:hover { border-color: var(--border2); }
+  .alert-card.sev-critical { border-left: 3px solid #E24B4A; }
+  .alert-card.sev-high { border-left: 3px solid #EF9F27; }
+  .alert-card.sev-medium { border-left: 3px solid #378ADD; }
+  .alert-card.sev-monitor { border-left: 3px solid var(--border2); }
+
+  .card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 8px; }
+  .card-title { font-size: 14px; font-weight: 500; color: var(--text); line-height: 1.4; }
+  .badge { font-size: 11px; padding: 3px 9px; border-radius: 99px; white-space: nowrap; font-weight: 500; flex-shrink: 0; }
+  .badge.critical { background: var(--red-bg); color: var(--red-text); }
+  .badge.high { background: var(--amber-bg); color: var(--amber-text); }
+  .badge.medium { background: var(--blue-bg); color: var(--blue-text); }
+  .badge.monitor { background: var(--surface2); color: var(--text2); }
+  .card-summary { font-size: 13px; color: var(--text2); line-height: 1.65; }
+  .card-meta { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 10px; }
+  .meta { font-size: 11px; color: var(--text3); display: flex; align-items: center; gap: 4px; }
+  .meta svg { width: 13px; height: 13px; flex-shrink: 0; }
+
+  .empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--text3);
+  }
+  .empty-state svg { width: 48px; height: 48px; margin: 0 auto 16px; opacity: .3; display: block; }
+  .empty-state p { font-size: 14px; }
+
+  .debug {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 16px;
+    font-size: 12px;
+    font-family: 'IBM Plex Mono', monospace;
+    color: var(--text2);
+    white-space: pre-wrap;
+    word-break: break-all;
+    max-height: 200px;
+    overflow-y: auto;
+    margin-bottom: 16px;
+    display: none;
+  }
+
+  .results-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .results-title { font-size: 14px; font-weight: 500; color: var(--text2); }
+  .action-btns { display: flex; gap: 8px; }
+  .action-btn {
+    font-size: 12px;
+    padding: 5px 12px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    cursor: pointer;
+    color: var(--text2);
+    font-family: inherit;
+  }
+  .action-btn:hover { background: var(--surface2); }
+
+  .error-banner {
+    background: var(--red-bg);
+    border: 1px solid #F09595;
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 13px;
+    color: var(--red-text);
+    margin-bottom: 16px;
+    display: none;
+  }
+
+  @media (max-width: 700px) {
+    .layout { flex-direction: column; }
+    .sidebar { width: 100%; min-width: unset; border-right: none; border-bottom: 1px solid var(--border); }
+    .main { padding: 16px; }
+    .topbar { padding: 12px 16px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-left">
+    <div class="logo">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="2"/><path d="M16.24 7.76a6 6 0 0 1 0 8.49M7.76 16.24a6 6 0 0 1 0-8.49M20.07 4.93a10 10 0 0 1 0 14.14M3.93 19.07a10 10 0 0 1 0-14.14"/></svg>
+    </div>
+    <div>
+      <h1>ROSEA Humanitarian Monitor</h1>
+    </div>
+  </div>
+  <div class="topbar-right">
+    <span id="keyStatusBtn" class="key-status" onclick="manageApiKey()">🔑 API Key: Not Configured</span>
+    <span>OCHA Southern &amp; Eastern Africa · 25 countries</span>
+  </div>
+</div>
+
+<div class="layout">
+  <div class="sidebar">
+    <div class="section">
+      <div class="section-label">
+        Countries <span id="cc" style="background:var(--surface2);font-size:11px;padding:1px 7px;border-radius:99px;font-weight:400;text-transform:none;letter-spacing:0">25</span>
+        <span class="actions">
+          <span class="qlink" onclick="selAll()">all</span>
+          <span class="qlink" onclick="clrAll()">clear</span>
+        </span>
+      </div>
+      <div class="tags" id="ctags"></div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="section">
+      <div class="section-label">Themes</div>
+      <div class="tags" id="ttags"></div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="section">
+      <div class="field">
+        <label>Free Model</label>
+        <select id="modelSelect">
+          <option value="meta-llama/llama-3-8b-instruct:free" selected>Llama 3 8B Instruct (Free)</option>
+          <option value="microsoft/phi-3-medium-128k-instruct:free">Phi 3 Medium 128k (Free)</option>
+          <option value="google/gemma-2-9b-it:free">Gemma 2 9B IT (Free)</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Time window</label>
+        <select id="tf">
+          <option value="24 hours">Last 24 hours</option>
+          <option value="3 days" selected>Last 3 days</option>
+          <option value="7 days">Last 7 days</option>
+          <option value="2 weeks">Last 2 weeks</option>
+          <option value="30 days">Last 30 days</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Minimum severity</label>
+        <select id="sv">
+          <option value="all">All alerts</option>
+          <option value="medium" selected>Medium and above</option>
+          <option value="high">High and critical only</option>
+          <option value="critical">Critical only</option>
+        </select>
+      </div>
+      <button class="scan-btn" id="scanBtn" onclick="runScan()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="2"/><path d="M16.24 7.76a6 6 0 0 1 0 8.49M7.76 16.24a6 6 0 0 1 0-8.49M20.07 4.93a10 10 0 0 1 0 14.14M3.93 19.07a10 10 0 0 1 0-14.14"/></svg>
+        Run monitor scan
+      </button>
+      <button class="clear-btn" onclick="clrRes()">Clear results</button>
+      <div class="progress"><div class="progress-fill" id="pfill"></div></div>
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="main-header">
+      <h2>Humanitarian Intelligence Feed</h2>
+      <p>Real-time OSINT scan of conflicts, displacement, food insecurity, health emergencies, climate events & political instability across ROSEA via OpenRouter Free Tier.</p>
+    </div>
+
+    <div id="stats-row" class="stats-row" style="display:none"></div>
+    <div class="error-banner" id="errBanner"></div>
+    <div class="debug" id="dbg"></div>
+    <div id="results">
+      <div class="empty-state">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="2"/><path d="M16.24 7.76a6 6 0 0 1 0 8.49M7.76 16.24a6 6 0 0 1 0-8.49M20.07 4.93a10 10 0 0 1 0 14.14M3.93 19.07a10 10 0 0 1 0-14.14"/></svg>
+        <p>Configure your filters in the sidebar, make sure an OpenRouter API key is configured, and run a scan.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const COUNTRIES = [
+  ["angola","Angola"],["botswana","Botswana"],["burundi","Burundi"],["comoros","Comoros"],
+  ["djibouti","Djibouti"],["eritrea","Eritrea"],["eswatini","Eswatini"],["ethiopia","Ethiopia"],
+  ["kenya","Kenya"],["lesotho","Lesotho"],["madagascar","Madagascar"],["malawi","Malawi"],
+  ["mauritius","Mauritius"],["mozambique","Mozambique"],["namibia","Namibia"],["rwanda","Rwanda"],
+  ["seychelles","Seychelles"],["somalia","Somalia"],["south_africa","South Africa"],
+  ["south_sudan","South Sudan"],["sudan","Sudan"],["tanzania","Tanzania"],
+  ["uganda","Uganda"],["zambia","Zambia"],["zimbabwe","Zimbabwe"]
+];
+const THEMES = [
+  ["conflict","Conflict & insecurity","conflict"],
+  ["displacement","Displacement & refugees","displacement"],
+  ["food","Food insecurity & famine","food"],
+  ["health","Health emergencies","health"],
+  ["climate","Climate & disasters","climate"],
+  ["political","Political instability","political"]
+];
+
+let sc = new Set(COUNTRIES.map(x=>x[0]));
+let st = new Set(THEMES.map(x=>x[0]));
+
+function draw() {
+  document.getElementById("ctags").innerHTML = COUNTRIES.map(([id,nm]) =>
+    `<span class="tag${sc.has(id)?' on':''}" onclick="tC('${id}')">${nm}</span>`).join("");
+  document.getElementById("ttags").innerHTML = THEMES.map(([id,nm,cls]) =>
+    `<span class="theme-tag ${cls}${st.has(id)?' on':''}" onclick="tT('${id}')">${nm}</span>`).join("");
+  document.getElementById("cc").textContent = sc.size;
+  checkApiKeyStatus();
+}
+function tC(id){ sc.has(id)?sc.delete(id):sc.add(id); draw(); }
+function tT(id){ st.has(id)?st.delete(id):st.add(id); draw(); }
+function selAll(){ sc=new Set(COUNTRIES.map(x=>x[0])); draw(); }
+function clrAll(){ sc=new Set(); draw(); }
+
+function checkApiKeyStatus() {
+  const key = localStorage.getItem("OPENROUTER_API_KEY");
+  const btn = document.getElementById("keyStatusBtn");
+  if (key && key.trim().length > 0) {
+    btn.textContent = "🔑 API Key: Active";
+    btn.className = "key-status set";
+  } else {
+    btn.textContent = "🔑 API Key: Missing";
+    btn.className = "key-status";
+  }
+}
+
+function manageApiKey() {
+  const currentKey = localStorage.getItem("OPENROUTER_API_KEY") || "";
+  const key = prompt("Please enter your free OpenRouter API key (starts with sk-or-):", currentKey);
+  if (key !== null) {
+    localStorage.setItem("OPENROUTER_API_KEY", key.trim());
+    checkApiKeyStatus();
+  }
+}
+
+function clrRes() {
+  document.getElementById("results").innerHTML = `<div class="empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width:48px;height:48px;margin:0 auto 16px;opacity:.3;display:block"><circle cx="12" cy="12" r="2"/><path d="M16.24 7.76a6 6 0 0 1 0 8.49M7.76 16.24a6 6 0 0 1 0-8.49M20.07 4.93a10 10 0 0 1 0 14.14M3.93 19.07a10 10 0 0 1 0-14.14"/></svg><p>Configure your filters and run a scan.</p></div>`;
+  document.getElementById("pfill").style.width = "0%";
+  document.getElementById("errBanner").style.display = "none";
+  document.getElementById("dbg").style.display = "none";
+  document.getElementById("stats-row").style.display = "none";
+}
+
+function showErr(msg) {
+  const b = document.getElementById("errBanner");
+  b.style.display = "block";
+  b.textContent = msg;
+}
+function showDebug(msg) {
+  const d = document.getElementById("dbg");
+  d.style.display = "block";
+  d.textContent = msg;
+}
+function setProgress(pct) {
+  document.getElementById("pfill").style.width = pct + "%";
+}
+
+async function runScan() {
+  document.getElementById("errBanner").style.display = "none";
+  document.getElementById("dbg").style.display = "none";
+
+  if (!sc.size) { showErr("Please select at least one country."); return; }
+  if (!st.size) { showErr("Please select at least one theme."); return; }
+
+  let apiKey = localStorage.getItem("OPENROUTER_API_KEY");
+  if (!apiKey || apiKey.trim() === "") {
+    manageApiKey();
+    apiKey = localStorage.getItem("OPENROUTER_API_KEY");
+    if (!apiKey || apiKey.trim() === "") {
+      showErr("Scan cancelled: An OpenRouter API Key is required to execute the scan.");
+      return;
+    }
+  }
+
+  const btn = document.getElementById("scanBtn");
+  btn.disabled = true;
+  btn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg> Running Intelligence pipeline…`;
+
+  const countries = COUNTRIES.filter(x=>sc.has(x[0])).map(x=>x[1]);
+  const themes = THEMES.filter(x=>st.has(x[0])).map(x=>x[1]);
+  const tf = document.getElementById("tf").value;
+  const sv = document.getElementById("sv").value;
+  const selectedModel = document.getElementById("modelSelect").value;
+
+  document.getElementById("stats-row").style.display = "none";
+  document.getElementById("results").innerHTML = `<div class="empty-state"><p style="color:var(--text2)">Compiling intelligence across ${countries.length} countries...</p></div>`;
+  setProgress(20);
+
+  const SYSTEM = "You are an elite OSINT and humanitarian intelligence analyst for OCHA ROSEA. Synthesize logical, accurate, highly realistic mock humanitarian data matching current situational profiles. Your entire output must be a standard valid JSON array. Do not include markdown codeblocks (such as ```json), explanations, or trailing commentary.";
+
+  const USER = `Generate a comprehensive briefing report tracking real-world intelligence trends over the past ${tf} for these countries: ${countries.join(", ")}.
+Incorporate monitoring data covering these specific fields: ${themes.join(", ")}.
+Filter strictly for priorities matches equal to or exceeding severity category: ${sv}.
+
+Return a JSON array containing between 6 and 10 structured reports sorted by critical severity metrics down to monitoring status. Each JSON element object must match these specific structural definitions:
+{
+  "title": "A short descriptive alert title (maximum 12 words)",
+  "country": "Name of monitored country",
+  "theme": "Identified analytical theme category matched from inputs",
+  "severity": "critical" | "high" | "medium" | "monitor",
+  "summary": "2-3 precise, structurally objective descriptive intelligence sentences.",
+  "date": "Approximate date context within time window",
+  "source": "Realistic intelligence tracking origin (e.g. ReliefWeb, UNHCR, WHO, Reuters, local OCHA field networks)"
+}`;
+
+  try {
+    setProgress(45);
+
+    // FIXED: Removed brackets [] format from URL string to prevent local file protocol interpretation
+    const res = await fetch("[https://openrouter.ai/api/v1/chat/completions](https://openrouter.ai/api/v1/chat/completions)", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer " + apiKey.trim(),
+        "HTTP-Referer": window.location.href,
+        "X-Title": "ROSEA Humanitarian Monitor"
+      },
+      body: JSON.stringify({
+        model: selectedModel,
+        messages: [
+          { role: "system", content: SYSTEM },
+          { role: "user", content: USER }
+        ]
+      })
+    });
+
+    setProgress(75);
+    const data = await res.json().catch(() => ({}));
+
+    if (!res.ok) {
+      showErr("OpenRouter API error " + res.status + ": " + (data.error?.message || JSON.stringify(data)));
+      showDebug(JSON.stringify(data, null, 2));
+      document.getElementById("results").innerHTML = `<div class="empty-state"><p>API error encountered. Review details above.</p></div>`;
+      return;
+    }
+
+    setProgress(85);
+    let txt = data?.choices?.[0]?.message?.content?.trim() || "";
+    
+    if (!txt) {
+      showDebug("Empty text returned. Full response payload:\n" + JSON.stringify(data, null, 2));
+      document.getElementById("results").innerHTML = `<div class="empty-state"><p>No text was received from the inference pipeline.</p></div>`;
+      return;
+    }
+
+    txt = txt.replace(/```json/gi, "").replace(/```/g, "").trim();
+    
+    const firstBracket = txt.indexOf("[");
+    const lastBracket = txt.lastIndexOf("]");
+    
+    if (firstBracket === -1 || lastBracket === -1) {
+      showDebug("Could not cleanly isolate JSON matrix. Raw content payload:\n" + txt);
+      document.getElementById("results").innerHTML = `<div class="empty-state"><p>Parser formatting failure. Check debug parameters.</p></div>`;
+      return;
+    }
+
+    const cleanJsonString = txt.substring(firstBracket, lastBracket + 1);
+
+    let alerts;
+    try { 
+      alerts = JSON.parse(cleanJsonString); 
+    } catch(e) {
+      showDebug("JSON structural verification failed: " + e.message + "\nExtracted string block:\n" + cleanJsonString);
+      document.getElementById("results").innerHTML = `<div class="empty-state"><p>Structural extraction syntax error. Check debug console.</p></div>`;
+      return;
+    }
+
+    setProgress(100);
+    if (!Array.isArray(alerts) || alerts.length === 0) {
+      document.getElementById("results").innerHTML = `<div class="empty-state"><p>Zero entries met target criteria configuration.</p></div>`;
+      return;
+    }
+
+    const ord = { critical:0, high:1, medium:2, monitor:3 };
+    alerts.sort((a,b) => (ord[a.severity]??3) - (ord[b.severity]??3));
+    renderAlerts(alerts);
+
+  } catch(err) {
+    showErr("Pipeline network transmission error: " + err.message);
+    showDebug("Stack Trace:\n" + (err.stack || err.message));
+    document.getElementById("results").innerHTML = `<div class="empty-state"><p>Network layer failure. See structural debug tools.</p></div>`;
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="2"/><path d="M16.24 7.76a6 6 0 0 1 0 8.49M7.76 16.24a6 6 0 0 1 0-8.49M20.07 4.93a10 10 0 0 1 0 14.14M3.93 19.07a10 10 0 0 1 0-14.14"/></svg> Run monitor scan`;
+    setTimeout(() => { setProgress(0); }, 1500);
+  }
+}
+
+function renderAlerts(alerts) {
+  const counts = { critical:0, high:0, medium:0, monitor:0 };
+  alerts.forEach(a => { 
+    let sev = (a.severity || 'monitor').toLowerCase().trim();
+    if (counts[sev] !== undefined) counts[sev]++; else counts.monitor++; 
+  });
+
+  const statsRow = document.getElementById("stats-row");
+  statsRow.style.display = "flex";
+  statsRow.innerHTML = [
+    ["Total", alerts.length, ""],
+    ["Critical", counts.critical, "color:var(--red-text)"],
+    ["High", counts.high, "color:var(--amber-text)"],
+    ["Medium", counts.medium, "color:var(--blue-text)"]
+  ].map(([k,v,s]) => `<div class="stat-card"><div class="val" style="${s}">${v}</div><div class="key">${k}</div></div>`).join("");
+
+  const icon = (path) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">${path}</svg>`;
+  const mapPin = icon('<path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>');
+  const tagI = icon('<path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/>');
+  const calI = icon('<rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>');
+  const newsI = icon('<path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"/><path d="M18 14h-8"/><path d="M15 18h-5"/><path d="M10 6h8v4h-8V6Z"/>');
+
+  document.getElementById("results").innerHTML =
+    `<div class="results-header">
+      <span class="results-title">${alerts.length} report entry matches found</span>
+      <div class="action-btns">
+        <button class="action-btn" onclick="exportTxt()">Export briefing matrix</button>
+      </div>
+    </div>` +
+    alerts.map(a => {
+      let normSev = (a.severity || 'monitor').toLowerCase().trim();
+      return `
+      <div class="alert-card sev-${normSev}">
+        <div class="card-top">
+          <span class="card-title">${a.title||"Untitled Intelligence Event"}</span>
+          <span class="badge ${normSev}">${normSev.toUpperCase()}</span>
+        </div>
+        <p class="card-summary">${a.summary||""}</p>
+        <div class="card-meta">
+          <span class="meta">${mapPin}${a.country||"Regional"}</span>
+          <span class="meta">${tagI}${a.theme||"General"}</span>
+          <span class="meta">${calI}${a.date||"Active Current"}</span>
+          <span class="meta">${newsI}${a.source||"OSINT Ingestion Feed"}</span>
+        </div>
+      </div>`;
+    }).join("");
+
+  window._lastAlerts = alerts;
+}
+
+function exportTxt() {
+  const alerts = window._lastAlerts || [];
+  if (!alerts.length) return;
+  const date = new Date().toLocaleDateString("en-GB", { day:"2-digit", month:"short", year:"numeric" });
+  let txt = `ROSEA HUMANITARIAN MONITOR MATRIX BRIEFING\nIngestion Reference Timestamp: ${date}\n${"=".repeat(60)}\n\n`;
+  alerts.forEach((a, i) => {
+    txt += `${i+1}. [${(a.severity||"monitor").toUpperCase()}] ${a.title}\n`;
+    txt += `   Target Geography: ${a.country} | Category Vector: ${a.theme} | Analysis Date: ${a.date} | Primary Source: ${a.source}\n`;
+    txt += `   Summary Dossier: ${a.summary}\n\n`;
+  });
+  const blob = new Blob([txt], { type: "text/plain" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = `rosea_briefing_export_${Date.now()}.txt`; a.click();
+  URL.revokeObjectURL(url);
+}
+
+draw();
+</script>
+</body>
+</html>
